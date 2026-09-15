@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import mongoose from 'mongoose'
 
 import palletRoutes, { pallets } from './routes/pallets.js'
 import layoutRoutes from './routes/layouts.js'
@@ -10,6 +11,11 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
+
+// Connect ke DB pasata_db
+mongoose.connect('mongodb://127.0.0.1:27017/pasata_db')
+  .then(() => console.log('🟢 MongoDB Connected to pasata_db via Podman!'))
+  .catch((err) => console.error('🔴 MongoDB Connection Error:', err.message))
 
 app.get('/api/health', (_req, res) => {
   res.json({
