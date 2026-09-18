@@ -1,21 +1,18 @@
 import express from 'express'
 import cors from 'cors'
-import mongoose from 'mongoose'
 
-import palletRoutes, { pallets } from './routes/pallets.js'
+import { connectDB } from './db.js'
+import { seedInitialData } from './seed.js'
+
+import palletRoutes from './routes/pallets.js'
 import layoutRoutes from './routes/layouts.js'
-import { createTransactionRouter } from './routes/transactions.js'
+import transactionRoutes from './routes/transactions.js'
 import authRoutes, { requireAuth } from './routes/auth.js'
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
-
-// Connect ke DB pasata_db
-mongoose.connect('mongodb://127.0.0.1:27017/pasata_db')
-  .then(() => console.log('🟢 MongoDB Connected to pasata_db via Podman!'))
-  .catch((err) => console.error('🔴 MongoDB Connection Error:', err.message))
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -28,7 +25,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/pallets', requireAuth, palletRoutes)
 app.use('/api/layouts', requireAuth, layoutRoutes)
-app.use('/api/transactions', requireAuth, createTransactionRouter(pallets))
+app.use('/api/transactions', requireAuth, transactionRoutes)
 
 app.use((req, res) => {
   res.status(404).json({
@@ -46,6 +43,13 @@ app.use((err, _req, res, _next) => {
 
 const PORT = 3000
 
-app.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`)
-})
+async function start() {
+  await connectDB()
+  await seedInitialData()
+
+  app.listen(PORT, () => {
+    console.log(`Backend running at http://localhost:${PORT}`)
+  })
+}
+
+start()

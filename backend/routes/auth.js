@@ -1,25 +1,10 @@
 import { Router } from 'express'
 import crypto from 'node:crypto'
+import User from '../models/User.js'
 
 const router = Router()
 
-// ======================================================
-// AUTH STORE
-// ======================================================
-// Untuk tahap sekarang data user masih disimpan di memory.
-// Nanti saat MongoDB masuk, bagian ini dapat dipindahkan
-// ke collection users tanpa mengubah alur frontend.
-
-const users = [
-  {
-    id: 'USR-0001',
-    name: 'Administrator',
-    username: 'admin',
-    passwordHash: hashPassword('admin123')
-  }
-]
-
-const sessions = new Map()
+const sessions = new Map() // token -> user id (tetap in-memory, gak perlu persisten)
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex')
@@ -47,15 +32,16 @@ function publicUser(user) {
   }
 }
 
-function generateUserId() {
-  return `USR-${String(users.length + 1).padStart(4, '0')}`
+async function generateUserId() {
+  const count = await User.countDocuments()
+  return `USR-${String(count + 1).padStart(4, '0')}`
 }
 
 function generateToken() {
   return crypto.randomBytes(32).toString('hex')
 }
 
-export function getUserFromRequest(req) {
+export async function getUserFromRequest(req) {
   const header = req.headers.authorization || ''
 
   if (!header.startsWith('Bearer ')) {
@@ -67,11 +53,11 @@ export function getUserFromRequest(req) {
 
   if (!userId) return null
 
-  return users.find(user => user.id === userId) || null
+  return User.findOne({ id: userId })
 }
 
-export function requireAuth(req, res, next) {
-  const user = getUserFromRequest(req)
+export async function requireAuth(req, res, next) {
+  const user = await getUserFromRequest(req)
 
   if (!user) {
     return res.status(401).json({
@@ -87,27 +73,19 @@ export function requireAuth(req, res, next) {
 // REGISTER
 // ======================================================
 
-router.post('/register', (req, res) => {
-  const {
-    name,
-    username,
-    password
-  } = req.body
+router.post('/register', async (req, res) => {
+  const { name, username, password } = req.body
 
   const cleanName = String(name || '').trim()
   const cleanUsername = String(username || '').trim().toLowerCase()
   const cleanPassword = String(password || '')
 
   if (!cleanName) {
-    return res.status(400).json({
-      message: 'Nama wajib diisi'
-    })
+    return res.status(400).json({ message: 'Nama wajib diisi' })
   }
 
   if (!cleanUsername) {
-    return res.status(400).json({
-      message: 'Username wajib diisi'
-    })
+    return res.status(400).json({ message: 'Username wajib diisi' })
   }
 
   if (!/^[a-z0-9._-]{3,30}$/.test(cleanUsername)) {
@@ -117,29 +95,21 @@ router.post('/register', (req, res) => {
   }
 
   if (cleanPassword.length < 6) {
-    return res.status(400).json({
-      message: 'Password minimal 6 karakter'
-    })
+    return res.status(400).json({ message: 'Password minimal 6 karakter' })
   }
 
-  const existingUser = users.find(
-    user => user.username === cleanUsername
-  )
+  const existingUser = await User.findOne({ username: cleanUsername })
 
   if (existingUser) {
-    return res.status(409).json({
-      message: 'Username sudah digunakan'
-    })
+    return res.status(409).json({ message: 'Username sudah digunakan' })
   }
 
-  const user = {
-    id: generateUserId(),
+  const user = await User.create({
+    id: await generateUserId(),
     name: cleanName,
     username: cleanUsername,
     passwordHash: hashPassword(cleanPassword)
-  }
-
-  users.push(user)
+  })
 
   res.status(201).json({
     message: 'User berhasil didaftarkan',
@@ -151,23 +121,16 @@ router.post('/register', (req, res) => {
 // LOGIN
 // ======================================================
 
-router.post('/login', (req, res) => {
-  const {
-    username,
-    password
-  } = req.body
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body
 
   const cleanUsername = String(username || '').trim().toLowerCase()
   const cleanPassword = String(password || '')
 
-  const user = users.find(
-    item => item.username === cleanUsername
-  )
+  const user = await User.findOne({ username: cleanUsername })
 
   if (!user || !verifyPassword(cleanPassword, user.passwordHash)) {
-    return res.status(401).json({
-      message: 'Username atau password salah'
-    })
+    return res.status(401).json({ message: 'Username atau password salah' })
   }
 
   const token = generateToken()
@@ -186,9 +149,7 @@ router.post('/login', (req, res) => {
 // ======================================================
 
 router.get('/me', requireAuth, (req, res) => {
-  res.json({
-    user: publicUser(req.user)
-  })
+  res.json({ user: publicUser(req.user) })
 })
 
 // ======================================================
@@ -203,9 +164,7 @@ router.post('/logout', (req, res) => {
     sessions.delete(token)
   }
 
-  res.json({
-    message: 'Logout berhasil'
-  })
+  res.json({ message: 'Logout berhasil' })
 })
 
 export default router
