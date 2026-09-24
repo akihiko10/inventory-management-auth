@@ -1,0 +1,1 @@
+export default function Inbound(){return <section className="page"><div className="page-head"><div><span className="eyebrow">TRANSACTION</span><h2>Inbound</h2></div></div><div className="panel"><h3>Barang Masuk</h3><p className="muted">Inbound akan kita bangun setelah struktur pallet dan layout stabil.</p></div></section>}

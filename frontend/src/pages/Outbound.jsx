@@ -1,0 +1,1 @@
+export default function Outbound(){return <section className="page"><div className="page-head"><div><span className="eyebrow">TRANSACTION</span><h2>Outbound</h2></div></div><div className="panel"><h3>Barang Keluar</h3><p className="muted">Outbound akan terhubung ke checklist, validasi FIFO, driver, nopol, grouping, dan rekap.</p></div></section>}
