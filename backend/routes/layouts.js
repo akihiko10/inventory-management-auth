@@ -1,11 +1,6 @@
 import { Router } from 'express'
-<<<<<<< HEAD
 import Layout from '../models/Layout.js'
-import Pallet from '../models/Pallet.js'
-=======
-import mongoose from 'mongoose'
 import { Pallet, PositionHistory } from './pallets.js'
->>>>>>> update-inventory-system
 
 const router = Router()
 
@@ -53,186 +48,209 @@ function formatLayout(layout) {
 }
 
 router.get('/', async (_req, res) => {
-  const layouts = await Layout.find()
-  res.json(layouts.map(formatLayout))
+  try {
+    const layouts = await Layout.find()
+    res.json(layouts.map(formatLayout))
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal mengambil data layout', error: err.message })
+  }
 })
 
 router.get('/:layoutId', async (req, res) => {
-  const layout = await Layout.findOne({ id: req.params.layoutId })
+  try {
+    const layout = await Layout.findOne({ id: req.params.layoutId })
 
-  if (!layout) {
-    return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    if (!layout) {
+      return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    }
+
+    res.json(formatLayout(layout))
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal mengambil detail layout', error: err.message })
   }
-
-  res.json(formatLayout(layout))
 })
 
 router.post('/', async (req, res) => {
-  const {
-    name,
-    orientation = 'horizontal',
-    fifoDirection = 'right',
-    levelCount = 3,
-    slotCount = 4
-  } = req.body
+  try {
+    const {
+      name,
+      orientation = 'horizontal',
+      fifoDirection = 'right',
+      levelCount = 3,
+      slotCount = 4
+    } = req.body
 
-  const parsedLevels = Number(levelCount)
-  const parsedSlots = Number(slotCount)
+    const parsedLevels = Number(levelCount)
+    const parsedSlots = Number(slotCount)
 
-  const layoutId = await generateLayoutId()
-  const finalName = name !== undefined ? name : `Layout ${layoutId}`
+    const layoutId = await generateLayoutId()
+    const finalName = name !== undefined ? name : `Layout ${layoutId}`
 
-  if (!String(finalName).trim()) {
-    return res.status(400).json({ message: 'Nama layout wajib diisi' })
+    if (!String(finalName).trim()) {
+      return res.status(400).json({ message: 'Nama layout wajib diisi' })
+    }
+
+    if (!['horizontal', 'vertical'].includes(orientation)) {
+      return res.status(400).json({ message: 'Orientasi tidak valid' })
+    }
+
+    if (!['right', 'left', 'down', 'up'].includes(fifoDirection)) {
+      return res.status(400).json({ message: 'Arah FIFO tidak valid' })
+    }
+
+    if (
+      !Number.isInteger(parsedLevels) ||
+      parsedLevels < 1 ||
+      parsedLevels > 10 ||
+      !Number.isInteger(parsedSlots) ||
+      parsedSlots < 1 ||
+      parsedSlots > 30
+    ) {
+      return res.status(400).json({ message: 'Jumlah level atau slot tidak valid' })
+    }
+
+    const layout = await Layout.create({
+      id: layoutId,
+      name: String(finalName).trim(),
+                                       orientation,
+                                       fifoDirection,
+                                       levels: createLevels(parsedLevels, parsedSlots)
+    })
+
+    res.status(201).json(formatLayout(layout))
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal membuat layout', error: err.message })
   }
-
-  if (!['horizontal', 'vertical'].includes(orientation)) {
-    return res.status(400).json({ message: 'Orientasi tidak valid' })
-  }
-
-  if (!['right', 'left', 'down', 'up'].includes(fifoDirection)) {
-    return res.status(400).json({ message: 'Arah FIFO tidak valid' })
-  }
-
-  if (
-    !Number.isInteger(parsedLevels) ||
-    parsedLevels < 1 ||
-    parsedLevels > 10 ||
-    !Number.isInteger(parsedSlots) ||
-    parsedSlots < 1 ||
-    parsedSlots > 30
-  ) {
-    return res.status(400).json({ message: 'Jumlah level atau slot tidak valid' })
-  }
-
-  const layout = await Layout.create({
-    id: layoutId,
-    name: String(finalName).trim(),
-    orientation,
-    fifoDirection,
-    levels: createLevels(parsedLevels, parsedSlots)
-  })
-
-  res.status(201).json(formatLayout(layout))
 })
 
 router.put('/:id', async (req, res) => {
-  const layout = await Layout.findOne({ id: req.params.id })
+  try {
+    const layout = await Layout.findOne({ id: req.params.id })
 
-  if (!layout) {
-    return res.status(404).json({ message: 'Layout tidak ditemukan' })
-  }
-
-  if (req.body.name !== undefined) {
-    const name = String(req.body.name).trim()
-    if (!name) {
-      return res.status(400).json({ message: 'Nama layout tidak boleh kosong' })
+    if (!layout) {
+      return res.status(404).json({ message: 'Layout tidak ditemukan' })
     }
-    layout.name = name
-  }
 
-  if (req.body.orientation !== undefined) {
-    if (!['horizontal', 'vertical'].includes(req.body.orientation)) {
-      return res.status(400).json({ message: 'Orientasi tidak valid' })
+    if (req.body.name !== undefined) {
+      const name = String(req.body.name).trim()
+      if (!name) {
+        return res.status(400).json({ message: 'Nama layout tidak boleh kosong' })
+      }
+      layout.name = name
     }
-    layout.orientation = req.body.orientation
-  }
 
-  if (req.body.fifoDirection !== undefined) {
-    if (!['right', 'left', 'down', 'up'].includes(req.body.fifoDirection)) {
-      return res.status(400).json({ message: 'Arah FIFO tidak valid' })
+    if (req.body.orientation !== undefined) {
+      if (!['horizontal', 'vertical'].includes(req.body.orientation)) {
+        return res.status(400).json({ message: 'Orientasi tidak valid' })
+      }
+      layout.orientation = req.body.orientation
     }
-    layout.fifoDirection = req.body.fifoDirection
-  }
 
-  await layout.save()
-  res.json(formatLayout(layout))
+    if (req.body.fifoDirection !== undefined) {
+      if (!['right', 'left', 'down', 'up'].includes(req.body.fifoDirection)) {
+        return res.status(400).json({ message: 'Arah FIFO tidak valid' })
+      }
+      layout.fifoDirection = req.body.fifoDirection
+    }
+
+    await layout.save()
+    res.json(formatLayout(layout))
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal mengupdate layout', error: err.message })
+  }
 })
 
 router.delete('/:id', async (req, res) => {
-  const layout = await Layout.findOneAndDelete({ id: req.params.id })
+  try {
+    const layout = await Layout.findOneAndDelete({ id: req.params.id })
 
-  if (!layout) {
-    return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    if (!layout) {
+      return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    }
+
+    res.json(formatLayout(layout))
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal menghapus layout', error: err.message })
   }
-
-  res.json(formatLayout(layout))
 })
 
 // Tempatkan pallet yang sebelumnya belum memiliki posisi.
 router.put('/:id/place', async (req, res) => {
-  const { palletId, levelId, position, color } = req.body
-  const layout = await Layout.findOne({ id: req.params.id })
+  try {
+    const { palletId, levelId, position, color } = req.body
+    const layout = await Layout.findOne({ id: req.params.id })
 
-  if (!layout) {
-    return res.status(404).json({ message: 'Layout tidak ditemukan' })
-  }
+    if (!layout) {
+      return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    }
 
-  if (!palletId) {
-    return res.status(400).json({ message: 'Pallet ID wajib diisi' })
-  }
+    if (!palletId) {
+      return res.status(400).json({ message: 'Pallet ID wajib diisi' })
+    }
 
-  const { slot } = findSlot(layout, levelId, position)
+    const { slot } = findSlot(layout, levelId, position)
 
-  if (!slot) {
-    return res.status(400).json({ message: 'Slot tujuan tidak valid' })
-  }
+    if (!slot) {
+      return res.status(400).json({ message: 'Slot tujuan tidak valid' })
+    }
 
-  if (slot.palletId) {
-    return res.status(409).json({ message: `Slot ${position} sudah ditempati ${slot.palletId}` })
-  }
+    if (slot.palletId) {
+      return res.status(409).json({ message: `Slot ${position} sudah ditempati ${slot.palletId}` })
+    }
 
-  for (const level of layout.levels) {
-    for (const currentSlot of level.slots) {
-      if (currentSlot.palletId === palletId) {
-        return res.status(409).json({ message: `${palletId} sudah berada di layout ini` })
+    for (const level of layout.levels) {
+      for (const currentSlot of level.slots) {
+        if (currentSlot.palletId === palletId) {
+          return res.status(409).json({ message: `${palletId} sudah berada di layout ini` })
+        }
       }
     }
-<<<<<<< HEAD
-=======
+
+    const palletDoc = await Pallet.findOne({ id: palletId })
 
     slot.palletId = palletId
+    slot.pallet = palletDoc ? palletDoc._id : null
     slot.color = color || '#4f7cff'
 
-    const pallet = await Pallet.findOne({ id: palletId })
-    if (pallet) {
-      const from = pallet.location || null
-      pallet.locationStatus = 'placed'
-      pallet.location = { layoutId: layout.id, layoutName: layout.name, levelId: levelId, position: Number(position) }
-      pallet.color = color || pallet.color
-      await pallet.save()
-      await PositionHistory.create({ palletId, userId: req.user?.id, username: req.user?.username, from, to: pallet.location, source: 'pallet-layout', note: 'Pallet ditempatkan pada layout' })
+    if (palletDoc) {
+      const from = palletDoc.location || null
+      palletDoc.locationStatus = 'placed'
+      palletDoc.location = { layoutId: layout.id, layoutName: layout.name, levelId: levelId, position: Number(position) }
+      palletDoc.color = color || palletDoc.color
+      await palletDoc.save()
+
+      // Catat riwayat posisi (Fitur Krisna)
+      await PositionHistory.create({
+        palletId,
+        userId: req.user?.id,
+        username: req.user?.username,
+        from,
+        to: palletDoc.location,
+        source: 'pallet-layout',
+        note: 'Pallet ditempatkan pada layout'
+      })
     }
 
+    layout.markModified('levels')
     await layout.save()
-    res.json(layout)
+
+    res.json(formatLayout(layout))
   } catch (err) {
     res.status(500).json({ message: 'Gagal menempatkan pallet', error: err.message })
->>>>>>> update-inventory-system
   }
-
-  const palletDoc = await Pallet.findOne({ id: palletId })
-
-  slot.palletId = palletId
-  slot.pallet = palletDoc?._id || null
-  slot.color = color || '#4f7cff'
-
-  layout.markModified('levels')
-  await layout.save()
-
-  res.json(formatLayout(layout))
 })
 
 // Pindahkan pallet dalam layout, termasuk pindah level dan swap.
 router.put('/:id/move', async (req, res) => {
-  const { fromLevelId, fromPosition, toLevelId, toPosition } = req.body
+  try {
+    const { fromLevelId, fromPosition, toLevelId, toPosition } = req.body
 
-  const layout = await Layout.findOne({ id: req.params.id })
+    const layout = await Layout.findOne({ id: req.params.id })
 
-<<<<<<< HEAD
-  if (!layout) {
-    return res.status(404).json({ message: 'Layout tidak ditemukan' })
-=======
+    if (!layout) {
+      return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    }
+
     const source = findSlot(layout, fromLevelId, fromPosition)
     const target = findSlot(layout, toLevelId, toPosition)
 
@@ -248,15 +266,18 @@ router.put('/:id/move', async (req, res) => {
       source.level.id === target.level.id &&
       source.slot.position === target.slot.position
     ) {
-      return res.json(layout)
+      return res.json(formatLayout(layout))
     }
 
-    // Swap palletId & color
+    // Swap ID, Model Ref, dan warna (menggabungkan versi Lu dan versi Krisna)
     const sourcePalletId = source.slot.palletId
     const targetPalletId = target.slot.palletId
+
     ;[source.slot.palletId, target.slot.palletId] = [targetPalletId, sourcePalletId]
+    ;[source.slot.pallet, target.slot.pallet] = [target.slot.pallet, source.slot.pallet]
     ;[source.slot.color, target.slot.color] = [target.slot.color, source.slot.color]
 
+    // Update history source
     const sourcePallet = await Pallet.findOne({ id: sourcePalletId })
     if (sourcePallet) {
       const from = sourcePallet.location || null
@@ -265,6 +286,8 @@ router.put('/:id/move', async (req, res) => {
       await sourcePallet.save()
       await PositionHistory.create({ palletId: sourcePalletId, userId: req.user?.id, username: req.user?.username, from, to: sourcePallet.location, source: 'pallet-layout', note: 'Pallet dipindahkan pada layout' })
     }
+
+    // Update history target (jika ada swap)
     if (targetPalletId) {
       const targetPallet = await Pallet.findOne({ id: targetPalletId })
       if (targetPallet) {
@@ -276,69 +299,47 @@ router.put('/:id/move', async (req, res) => {
       }
     }
 
+    layout.markModified('levels')
     await layout.save()
-    res.json(layout)
+
+    res.json(formatLayout(layout))
   } catch (err) {
     res.status(500).json({ message: 'Gagal memindahkan pallet', error: err.message })
->>>>>>> update-inventory-system
   }
-
-  const source = findSlot(layout, fromLevelId, fromPosition)
-  const target = findSlot(layout, toLevelId, toPosition)
-
-  if (!source.slot || !target.slot) {
-    return res.status(400).json({ message: 'Posisi pallet tidak valid' })
-  }
-
-  if (!source.slot.palletId) {
-    return res.status(400).json({ message: 'Slot asal tidak memiliki pallet' })
-  }
-
-  if (
-    source.level.id === target.level.id &&
-    source.slot.position === target.slot.position
-  ) {
-    return res.json(formatLayout(layout))
-  }
-
-  ;[source.slot.palletId, target.slot.palletId] = [target.slot.palletId, source.slot.palletId]
-  ;[source.slot.pallet, target.slot.pallet] = [target.slot.pallet, source.slot.pallet]
-  ;[source.slot.color, target.slot.color] = [target.slot.color, source.slot.color]
-
-  layout.markModified('levels')
-  await layout.save()
-
-  res.json(formatLayout(layout))
 })
 
 // Kompatibilitas dengan endpoint versi sebelumnya.
 router.put('/:id/position', async (req, res) => {
-  const { levelId, fromPosition, toPosition } = req.body
-  const layout = await Layout.findOne({ id: req.params.id })
+  try {
+    const { levelId, fromPosition, toPosition } = req.body
+    const layout = await Layout.findOne({ id: req.params.id })
 
-  if (!layout) {
-    return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    if (!layout) {
+      return res.status(404).json({ message: 'Layout tidak ditemukan' })
+    }
+
+    const source = findSlot(layout, levelId, fromPosition)
+    const target = findSlot(layout, levelId, toPosition)
+
+    if (!source.slot || !target.slot) {
+      return res.status(400).json({ message: 'Posisi pallet tidak valid' })
+    }
+
+    if (!source.slot.palletId) {
+      return res.status(400).json({ message: 'Slot asal tidak memiliki pallet' })
+    }
+
+    ;[source.slot.palletId, target.slot.palletId] = [target.slot.palletId, source.slot.palletId]
+    ;[source.slot.pallet, target.slot.pallet] = [target.slot.pallet, source.slot.pallet]
+    ;[source.slot.color, target.slot.color] = [target.slot.color, source.slot.color]
+
+    layout.markModified('levels')
+    await layout.save()
+
+    res.json(formatLayout(layout))
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal mengubah posisi', error: err.message })
   }
-
-  const source = findSlot(layout, levelId, fromPosition)
-  const target = findSlot(layout, levelId, toPosition)
-
-  if (!source.slot || !target.slot) {
-    return res.status(400).json({ message: 'Posisi pallet tidak valid' })
-  }
-
-  if (!source.slot.palletId) {
-    return res.status(400).json({ message: 'Slot asal tidak memiliki pallet' })
-  }
-
-  ;[source.slot.palletId, target.slot.palletId] = [target.slot.palletId, source.slot.palletId]
-  ;[source.slot.pallet, target.slot.pallet] = [target.slot.pallet, source.slot.pallet]
-  ;[source.slot.color, target.slot.color] = [target.slot.color, source.slot.color]
-
-  layout.markModified('levels')
-  await layout.save()
-
-  res.json(formatLayout(layout))
 })
 
 export default router
