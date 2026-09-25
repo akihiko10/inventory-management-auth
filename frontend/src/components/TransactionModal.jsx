@@ -7,6 +7,7 @@ const emptyNewItem = () => ({
   itemId: null,
   sku: '',
   itemName: '',
+  itemType: '',
   packaging: 'Box',
   packageQty: 0,
   cartonQty: 0,
@@ -44,6 +45,7 @@ export default function TransactionModal({
       itemId: item.id,
       sku: item.sku,
       itemName: item.itemName,
+      itemType: item.itemType || '',
       packaging: item.packaging,
       packageQty: 0,
       cartonQty: 0,
@@ -172,7 +174,8 @@ export default function TransactionModal({
           cartonQty: number(row.cartonQty),
           sackQty: number(row.sackQty),
           weightKg: number(row.weightKg),
-          barcode: row.barcode
+          barcode: row.barcode,
+          itemType: row.itemType
         }))
       }
 
@@ -299,6 +302,11 @@ export default function TransactionModal({
                             placeholder="Nama barang"
                             value={row.itemName}
                             onChange={event => updateRow(row.rowId, 'itemName', event.target.value)}
+                          />
+                          <input
+                            placeholder="Jenis barang"
+                            value={row.itemType}
+                            onChange={event => updateRow(row.rowId, 'itemType', event.target.value)}
                           />
                           <input
                             placeholder="Barcode"

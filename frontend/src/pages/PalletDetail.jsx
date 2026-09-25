@@ -12,11 +12,14 @@ import {
 const initialForm = {
   sku: '',
   itemName: '',
+  itemType: '',
   packaging: '',
   packageQty: 0,
   cartonQty: 0,
   sackQty: 0,
+  boxQty: 0,
   weightKg: 0,
+  customFieldsText: '{}',
   barcode: ''
 }
 
@@ -63,11 +66,14 @@ export default function PalletDetail() {
     setForm({
       sku: item.sku || '',
       itemName: item.itemName || '',
+      itemType: item.itemType || '',
       packaging: item.packaging || '',
       packageQty: item.packageQty || 0,
       cartonQty: item.cartonQty || 0,
       sackQty: item.sackQty || 0,
+      boxQty: item.boxQty || 0,
       weightKg: item.weightKg || 0,
+      customFieldsText: JSON.stringify(item.customFields || {}, null, 2),
       barcode: item.barcode || ''
     })
     setShowModal(true)
@@ -83,7 +89,9 @@ export default function PalletDetail() {
         packageQty: Number(form.packageQty),
         cartonQty: Number(form.cartonQty),
         sackQty: Number(form.sackQty),
-        weightKg: Number(form.weightKg)
+        boxQty: Number(form.boxQty),
+        weightKg: Number(form.weightKg),
+        customFields: (() => { try { return JSON.parse(form.customFieldsText || '{}') } catch { return {} } })()
       }
 
       if (editingItem) {
@@ -231,6 +239,7 @@ export default function PalletDetail() {
                 <tr>
                   <th>SKU</th>
                   <th>Barang</th>
+                  <th>Jenis</th>
                   <th>Barcode</th>
                   <th>Kemasan</th>
                   <th>Karton</th>
@@ -245,6 +254,7 @@ export default function PalletDetail() {
                   <tr key={item.id}>
                     <td><strong>{item.sku}</strong></td>
                     <td>{item.itemName}</td>
+                    <td>{item.itemType || '-'}</td>
                     <td>{item.barcode || '-'}</td>
                     <td>{item.packaging || '-'}</td>
                     <td>{item.cartonQty}</td>
@@ -295,6 +305,11 @@ export default function PalletDetail() {
             </label>
 
             <label>
+              Jenis Barang
+              <input value={form.itemType} onChange={e => setForm({ ...form, itemType: e.target.value })} placeholder="Frozen Food / Daging / Sayur" />
+            </label>
+
+            <label>
               Nama Barang
               <input required value={form.itemName} onChange={e => setForm({ ...form, itemName: e.target.value })} />
             </label>
@@ -321,10 +336,19 @@ export default function PalletDetail() {
                 <input type="number" min="0" value={form.sackQty} onChange={e => setForm({ ...form, sackQty: e.target.value })} />
               </label>
               <label>
+                Jumlah Box
+                <input type="number" min="0" value={form.boxQty} onChange={e => setForm({ ...form, boxQty: e.target.value })} />
+              </label>
+              <label>
                 Berat (kg)
                 <input type="number" min="0" step="0.01" value={form.weightKg} onChange={e => setForm({ ...form, weightKg: e.target.value })} />
               </label>
             </div>
+
+            <label>
+              Dynamic Fields (JSON)
+              <textarea rows="5" value={form.customFieldsText} onChange={e => setForm({ ...form, customFieldsText: e.target.value })} placeholder='{"batch":"B-001","suhu":-18}' />
+            </label>
 
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={() => setShowModal(false)}>

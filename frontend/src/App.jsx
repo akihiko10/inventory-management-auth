@@ -15,6 +15,9 @@ import Pallets from './pages/Pallets'
 import TransactionHistory from './pages/TransactionHistory'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import WarehouseManagement from './pages/WarehouseManagement'
+import TransactionsManagement from './pages/TransactionsManagement'
+import ManifestManagement from './pages/ManifestManagement'
 
 import {
   getCurrentUser,
@@ -28,8 +31,11 @@ const menus = [
   ['/', 'Dashboard'],
   ['/pallets', 'Pallet'],
   ['/layout', 'Pallet Layout'],
+  ['/warehouse', 'Denah Gudang'],
   ['/inbound', 'Inbound'],
-  ['/outbound', 'Outbound']
+  ['/outbound', 'Outbound'],
+  ['/transactions', 'Transaksi'],
+  ['/manifests', 'Manifest']
 ]
 
 function ProtectedApp({ user, onLogout }) {
@@ -130,8 +136,11 @@ function ProtectedApp({ user, onLogout }) {
           <Route path="/pallets" element={<Pallets />} />
           <Route path="/layout" element={<PalletLayout />} />
           <Route path="/layout/:palletId" element={<PalletDetail />} />
+          <Route path="/warehouse" element={<WarehouseManagement />} />
           <Route path="/inbound" element={<TransactionHistory type="inbound" />} />
           <Route path="/outbound" element={<TransactionHistory type="outbound" />} />
+          <Route path="/transactions" element={<TransactionsManagement />} />
+          <Route path="/manifests" element={<ManifestManagement />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

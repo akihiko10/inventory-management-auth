@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Warehouse Management",
+    "slug": "warehouse-management-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.warehouse.inventorymanagement",
+      "permissions": ["CAMERA"]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Kamera digunakan untuk memindai barcode pallet dan SKU."
+      }
+    },
+    "plugins": ["expo-camera"]
+  }
+}

@@ -40,3 +40,15 @@ Frontend berjalan di `http://localhost:5173`.
 ## Catatan
 
 Data user masih in-memory untuk tahap development. Jika backend direstart, user hasil register akan kembali ke kondisi awal. Saat MongoDB diintegrasikan, data user dapat dipindahkan ke collection `users`.
+
+## Web + Mobile parity
+
+Folder `mobile/` adalah client kedua untuk backend yang sama. Semua menu utama Web dipetakan ke Mobile. Fitur yang secara visual membutuhkan drag & drop memakai touch-friendly selection/confirmation di HP, tetapi menghasilkan operasi backend yang sama.
+
+### Menu parity
+- Dashboard
+- Pallet / Item / Barcode / Summary / Position Tracking
+- Pallet Layout
+- Denah Gudang / Rack / Slotting / Movement / FIFO
+- Inbound / Outbound / Driver / Nopol / Draft / History
+- Manifest / Grouping / Reconciliation / Weight & Packaging Summary

@@ -7,6 +7,8 @@ import { seedInitialData } from './seed.js'
 import palletRoutes from './routes/pallets.js'
 import layoutRoutes from './routes/layouts.js'
 import transactionRoutes from './routes/transactions.js'
+import manifestRoutes from './routes/manifests.js'
+import warehouseRoutes from './routes/warehouses.js'
 import authRoutes, { requireAuth } from './routes/auth.js'
 
 const app = express()
@@ -26,6 +28,8 @@ app.use('/api/auth', authRoutes)
 app.use('/api/pallets', requireAuth, palletRoutes)
 app.use('/api/layouts', requireAuth, layoutRoutes)
 app.use('/api/transactions', requireAuth, transactionRoutes)
+app.use('/api/manifests', requireAuth, manifestRoutes)
+app.use('/api/warehouses', requireAuth, warehouseRoutes)
 
 app.use((req, res) => {
   res.status(404).json({
