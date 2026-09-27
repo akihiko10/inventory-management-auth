@@ -1,0 +1,16 @@
+INVENTORY MANAGEMENT — WEB
+
+This package focuses on the desktop web application. The mobile source is left untouched.
+
+1. Start MongoDB on localhost:27017 (database: pasata_db).
+2. Backend:
+   cd backend
+   npm install
+   npm run dev
+3. Frontend (new terminal):
+   cd frontend
+   npm install
+   npm run dev
+4. Open the Vite URL shown in the terminal (normally http://localhost:5173).
+
+Important: node_modules is intentionally NOT included in this ZIP. This avoids extraction/permission problems and prevents shipping platform-specific binaries.
