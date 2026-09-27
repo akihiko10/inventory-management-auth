@@ -3181,3 +3181,312 @@ textarea:focus {
     width: 100%;
   }
 }
+
+
+/* ======================================================
+   WEB FIX — DESKTOP LAYOUT STABILITY
+   Keep the web UI centered and evenly distributed.
+   Mobile app is intentionally not modified.
+====================================================== */
+
+/* Main content should use the available desktop width without hugging the left edge. */
+.page {
+  width: 100%;
+  max-width: 1540px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 34px;
+  padding-right: 34px;
+}
+
+/* Five-step module navigation: evenly distributed instead of left-packed. */
+.module-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 5px;
+  overflow: visible;
+}
+
+.module-tab {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Two-column forms/cards stay balanced and never collapse because of long labels. */
+.module-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.module-grid-2 > .panel,
+.module-grid-2 > .layout-card {
+  min-width: 0;
+}
+
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid > label,
+.form-grid > .form-submit {
+  min-width: 0;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Cold-storage input row is a stable three-column desktop form. */
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(150px, .8fr) minmax(220px, 1.2fr) minmax(150px, .55fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.inline-form > * {
+  min-width: 0;
+  width: 100%;
+}
+
+.warehouse-selector-head {
+  width: 280px;
+  flex: 0 0 280px;
+}
+
+.warehouse-selector-head select {
+  width: 100%;
+  min-width: 0;
+}
+
+.warehouse-map-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.floor-grid {
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+/* Tables/cards must not force the entire page wider than the viewport. */
+.master-table-wrap,
+.detail-table-wrap,
+.panel,
+.layout-card {
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .page {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .module-tabs {
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    overflow-x: auto;
+  }
+
+  .inline-form {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .warehouse-map-cards,
+  .floor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .module-grid-2,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .warehouse-selector-head {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .warehouse-map-cards,
+  .floor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ======================================================
+   FINAL WEB LAYOUT FIX
+   Shared desktop spacing + separated transaction views.
+====================================================== */
+
+/* Every main surface gets an internal gutter. This fixes the
+   content that was visually stuck to the left edge of cards. */
+.panel,
+.layout-card {
+  padding: 22px;
+}
+
+/* Do not double-pad operation cards because their own rules already
+   define the desired compact spacing. */
+.operation-form-card,
+.operation-side-card {
+  padding: 20px;
+}
+
+/* Keep all card headers aligned with their card content. */
+.panel > .section-head,
+.layout-card > .section-title-row {
+  width: 100%;
+}
+
+/* Forms should use the complete card width instead of squeezing labels. */
+.panel .form-grid,
+.layout-card .form-grid {
+  width: 100%;
+}
+
+.panel .form-grid label,
+.layout-card .form-grid label {
+  min-width: 0;
+}
+
+/* Five tabs always occupy the same visual width on desktop. */
+.module-tabs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.module-tab {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Transaction-specific UI */
+.transaction-type-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .05em;
+}
+
+.transaction-type-chip.inbound {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.transaction-type-chip.outbound {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.transaction-readonly-box {
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 11px;
+  border: 1px solid #dbe2ea;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.transaction-readonly-box span {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .06em;
+}
+
+.transaction-readonly-box strong {
+  margin-top: 2px;
+  color: #172033;
+  font-size: 12px;
+}
+
+.transaction-item-picker {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.transaction-item-picker select {
+  width: 100%;
+}
+
+.dispatch-management-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.dispatch-description {
+  margin: -5px 0 18px;
+  max-width: 900px;
+}
+
+.dispatch-detail-card {
+  position: sticky;
+  top: 96px;
+}
+
+.dispatch-detail-id {
+  margin: 0 0 14px;
+  padding: 11px 12px;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.dispatch-table .selected-row td {
+  background: #eff6ff;
+}
+
+.compact-empty {
+  padding: 30px 18px;
+  box-shadow: none;
+}
+
+@media (max-width: 1250px) {
+  .dispatch-management-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dispatch-detail-card {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .module-tabs {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .module-tab {
+    flex: 0 0 180px;
+  }
+
+  .panel,
+  .layout-card {
+    padding: 18px;
+  }
+}

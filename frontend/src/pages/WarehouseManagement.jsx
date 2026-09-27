@@ -342,7 +342,27 @@ export default function WarehouseManagement() {
         <div className="warehouse-selector-head">
           <label>
             Gudang aktif
-            <select value={selectedWarehouseId} onChange={event => setSelectedWarehouseId(event.target.value)}>
+            <select
+              value={selectedWarehouseId}
+              onChange={event => {
+                const warehouseId = event.target.value
+                const warehouse = warehouses.find(item => String(item._id) === String(warehouseId))
+                const coldStorageId = String(warehouse?.coldStorages?.[0]?._id || '')
+                const rackId = String(warehouse?.coldStorages?.[0]?.racks?.[0]?._id || '')
+
+                setSelectedWarehouseId(warehouseId)
+                setSelectedColdStorageId(coldStorageId)
+                setSelectedRackId(rackId)
+                setManualMovement(current => ({
+                  ...current,
+                  warehouseId,
+                  coldStorageId,
+                  rackId,
+                  levelCode: 'L1',
+                  slotCode: ''
+                }))
+              }}
+            >
               {warehouses.map(warehouse => <option key={warehouse._id} value={warehouse._id}>{warehouse.code} — {warehouse.name}</option>)}
             </select>
           </label>
