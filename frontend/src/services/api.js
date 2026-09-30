@@ -35,34 +35,62 @@ export const getCurrentUser = () =>
   })
 
 export const logoutUser = () =>
-  api.post('/auth/logout', {}, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('warehouse_token') || ''}`
+  api.post(
+    '/auth/logout',
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('warehouse_token') || ''}`
+      }
     }
-  })
+  )
 
 // ======================================================
 // PALLET MASTER
 // ======================================================
 
-export const getPallets = () => api.get('/pallets')
-export const getPallet = palletId => api.get(`/pallets/${palletId}`)
-export const createPallet = data => api.post('/pallets', data)
-export const updatePallet = (palletId, data) => api.put(`/pallets/${palletId}`, data)
-export const addPalletItem = (palletId, data) => api.post(`/pallets/${palletId}/items`, data)
-export const updatePalletItem = (palletId, itemId, data) => api.put(`/pallets/${palletId}/items/${itemId}`, data)
-export const deletePalletItem = (palletId, itemId) => api.delete(`/pallets/${palletId}/items/${itemId}`)
-export const clearPalletItems = palletId => api.delete(`/pallets/${palletId}/items`)
+export const getPallets = () =>
+  api.get('/pallets')
+
+export const getPallet = palletId =>
+  api.get(`/pallets/${palletId}`)
+
+export const createPallet = data =>
+  api.post('/pallets', data)
+
+export const updatePallet = (palletId, data) =>
+  api.put(`/pallets/${palletId}`, data)
+
+export const addPalletItem = (palletId, data) =>
+  api.post(`/pallets/${palletId}/items`, data)
+
+export const updatePalletItem = (palletId, itemId, data) =>
+  api.put(`/pallets/${palletId}/items/${itemId}`, data)
+
+export const deletePalletItem = (palletId, itemId) =>
+  api.delete(`/pallets/${palletId}/items/${itemId}`)
+
+export const clearPalletItems = palletId =>
+  api.delete(`/pallets/${palletId}/items`)
 
 // ======================================================
 // LAYOUT
 // ======================================================
 
-export const getLayouts = () => api.get('/layouts')
-export const getLayout = layoutId => api.get(`/layouts/${layoutId}`)
-export const createLayout = data => api.post('/layouts', data)
-export const updateLayout = (layoutId, data) => api.put(`/layouts/${layoutId}`, data)
-export const deleteLayout = layoutId => api.delete(`/layouts/${layoutId}`)
+export const getLayouts = () =>
+  api.get('/layouts')
+
+export const getLayout = layoutId =>
+  api.get(`/layouts/${layoutId}`)
+
+export const createLayout = data =>
+  api.post('/layouts', data)
+
+export const updateLayout = (layoutId, data) =>
+  api.put(`/layouts/${layoutId}`, data)
+
+export const deleteLayout = layoutId =>
+  api.delete(`/layouts/${layoutId}`)
 
 export const placePallet = (layoutId, data) =>
   api.put(`/layouts/${layoutId}/place`, data)
@@ -87,55 +115,151 @@ export const createTransaction = data =>
 // MODUL 1 - DENAH GUDANG & DYNAMIC RACKING
 // ======================================================
 
-export const getWarehouses = () => api.get('/warehouses')
-export const createWarehouse = data => api.post('/warehouses', data)
+export const getWarehouses = () =>
+  api.get('/warehouses')
+
+export const createWarehouse = data =>
+  api.post('/warehouses', data)
+
 export const updateWarehouse = (warehouseId, data) =>
   api.put(`/warehouses/${warehouseId}`, data)
+
 export const deleteWarehouse = warehouseId =>
   api.delete(`/warehouses/${warehouseId}`)
+
+// ------------------------------------------------------
+// COLD STORAGE
+// ------------------------------------------------------
+
 export const createColdStorage = (warehouseId, data) =>
-  api.post(`/warehouses/${warehouseId}/cold-storages`, data)
+  api.post(
+    `/warehouses/${warehouseId}/cold-storages`,
+    data
+  )
+
+export const deleteColdStorage = (
+  warehouseId,
+  coldStorageId
+) =>
+  api.delete(
+    `/warehouses/${warehouseId}/cold-storages/${encodeURIComponent(
+      coldStorageId
+    )}`
+  )
+
+// ------------------------------------------------------
+// AREA
+// ------------------------------------------------------
+
 export const createWarehouseArea = (warehouseId, data) =>
   api.post(`/warehouses/${warehouseId}/areas`, data)
+
+// ------------------------------------------------------
+// RACK
+// ------------------------------------------------------
+
 export const createRack = (warehouseId, coldStorageId, data) =>
-  api.post(`/warehouses/${warehouseId}/cold-storages/${coldStorageId}/racks`, data)
-export const configureWarehouseRack = (warehouseId, coldStorageId, rackId, data) =>
-  api.put(`/warehouses/${warehouseId}/cold-storages/${coldStorageId}/racks/${rackId}/config`, data)
+  api.post(
+    `/warehouses/${warehouseId}/cold-storages/${encodeURIComponent(coldStorageId)}/racks`,
+    data
+  )
+
+export const configureWarehouseRack = (
+  warehouseId,
+  coldStorageId,
+  rackId,
+  data
+) =>
+  api.put(
+    `/warehouses/${warehouseId}/cold-storages/${encodeURIComponent(coldStorageId)}/racks/${encodeURIComponent(rackId)}/config`,
+    data
+  )
+
+// ------------------------------------------------------
+// MONITORING
+// ------------------------------------------------------
+
 export const getWarehouseMonitoring = params =>
   api.get('/warehouses/monitoring/slots', { params })
+
 export const getFifoReport = () =>
   api.get('/warehouses/monitoring/fifo')
+
+// ------------------------------------------------------
+// MOVEMENT
+// ------------------------------------------------------
+
 export const moveWarehousePallet = data =>
   api.post('/warehouses/movement', data)
+
 export const getWarehouseMovementHistory = () =>
   api.get('/warehouses/movement/history')
 
 // ======================================================
 // MODUL 2 - PALLET VALIDATION, BARCODE & POSITION TRACKING
 // ======================================================
-export const validatePalletBarcode = data => api.post('/pallets/validate-barcode', data)
-export const updatePalletValidation = (palletId, data) => api.put(`/pallets/${palletId}/validation`, data)
-export const getPalletPositionHistory = palletId => api.get(`/pallets/${palletId}/position-history`)
+
+export const validatePalletBarcode = data =>
+  api.post('/pallets/validate-barcode', data)
+
+export const updatePalletValidation = (palletId, data) =>
+  api.put(`/pallets/${palletId}/validation`, data)
+
+export const getPalletPositionHistory = palletId =>
+  api.get(`/pallets/${palletId}/position-history`)
 
 // ======================================================
 // MODUL 3 - TRANSACTION GATEWAY / DRAFT / LOG
 // ======================================================
-export const validateTransaction = data => api.post('/transactions/validate', data)
-export const createTransactionDraft = data => api.post('/transactions/drafts', data)
-export const getTransactionDrafts = () => api.get('/transactions/drafts')
-export const verifyTransactionDraft = (id, data) => api.put(`/transactions/drafts/${id}/verify`, data)
-export const rejectTransactionDraft = (id, data) => api.put(`/transactions/drafts/${id}/reject`, data)
-export const getTransactionLogs = () => api.get('/transactions/logs')
+
+export const validateTransaction = data =>
+  api.post('/transactions/validate', data)
+
+export const createTransactionDraft = data =>
+  api.post('/transactions/drafts', data)
+
+export const getTransactionDrafts = () =>
+  api.get('/transactions/drafts')
+
+export const verifyTransactionDraft = (id, data) =>
+  api.put(`/transactions/drafts/${id}/verify`, data)
+
+export const rejectTransactionDraft = (id, data) =>
+  api.put(`/transactions/drafts/${id}/reject`, data)
+
+export const getTransactionLogs = () =>
+  api.get('/transactions/logs')
 
 // ======================================================
 // MODUL 4 - MANIFESTS
 // ======================================================
-export const getManifests = () => api.get('/manifests')
-export const generateManifest = data => api.post('/manifests/generate', data)
-export const reconcileManifest = (id, data) => api.put(`/manifests/${id}/reconcile`, data)
 
-export const exportManifestCsv = () => api.get('/manifests/export/csv', { responseType: 'blob' })
+export const getManifests = () =>
+  api.get('/manifests')
 
-export function getApiErrorMessage(error, fallback = 'Terjadi kesalahan pada server') {
-  return error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback
+export const generateManifest = data =>
+  api.post('/manifests/generate', data)
+
+export const reconcileManifest = (id, data) =>
+  api.put(`/manifests/${id}/reconcile`, data)
+
+export const exportManifestCsv = () =>
+  api.get('/manifests/export/csv', {
+    responseType: 'blob'
+  })
+
+// ======================================================
+// ERROR HELPER
+// ======================================================
+
+export function getApiErrorMessage(
+  error,
+  fallback = 'Terjadi kesalahan pada server'
+) {
+  return (
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    fallback
+  )
 }
