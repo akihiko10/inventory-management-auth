@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getPallets, updatePalletValidation, validatePalletBarcode, getPalletPositionHistory } from '../services/api'
+import { getPallets, updatePalletValidation, validatePalletBarcode, getPalletPositionHistory, getApiErrorMessage } from '../services/api'
 import { createPallet } from '../services/api'
 
 function fmt(v) { return Number(v || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 }) }
@@ -17,6 +17,7 @@ export default function Pallets() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ id: '', name: '' })
   const [loading, setLoading] = useState(true)
+  const [validationSaving, setValidationSaving] = useState({})
 
   async function load() { try { setLoading(true); const { data } = await getPallets(); setPallets(data || []) } catch (err) { alert(err?.response?.data?.message || 'Gagal mengambil data pallet') } finally { setLoading(false) } }
   useEffect(() => { load() }, [])
@@ -32,8 +33,37 @@ export default function Pallets() {
     catch (err) { alert(err?.response?.data?.message || 'Gagal membuat pallet') }
   }
   async function setValidation(pallet, status) {
-    try { const { data } = await updatePalletValidation(pallet.id, { validationStatus: status }); setPallets(prev => prev.map(x => x.id === pallet.id ? data : x)) }
-    catch (err) { alert(err?.response?.data?.message || 'Gagal mengubah validasi') }
+    const palletId = String(pallet.id || '').trim()
+    if (!palletId) return
+    if (String(pallet.validationStatus || 'pending').toLowerCase() === status) return
+
+    setValidationSaving(prev => ({ ...prev, [palletId]: true }))
+    try {
+      const { data } = await updatePalletValidation(palletId, {
+        validationStatus: status,
+        validationNote: ''
+      })
+
+      const updated = data?.pallet || data
+      setPallets(prev => prev.map(x => String(x.id) === palletId ? updated : x))
+
+      // Reload dari database agar dropdown tidak hanya berubah di state lokal.
+      const refreshed = await getPallets()
+      setPallets(refreshed.data || [])
+    } catch (err) {
+      alert(getApiErrorMessage(err, 'Gagal mengubah validasi pallet'))
+      // Kembalikan nilai dari database jika request gagal.
+      try {
+        const refreshed = await getPallets()
+        setPallets(refreshed.data || [])
+      } catch {}
+    } finally {
+      setValidationSaving(prev => {
+        const next = { ...prev }
+        delete next[palletId]
+        return next
+      })
+    }
   }
   async function startCameraScan() {
     setScannerMessage('')
@@ -74,7 +104,7 @@ export default function Pallets() {
 
     {tab === 'master' && <>
       <div className="pallet-master-grid"><div className="master-stat"><span>Total Pallet</span><strong>{pallets.length}</strong></div><div className="master-stat"><span>Occupied</span><strong>{summary.occupied}</strong></div><div className="master-stat"><span>Partial</span><strong>{summary.partial}</strong></div><div className="master-stat"><span>Unplaced/Empty</span><strong>{summary.empty}</strong></div></div>
-      <div className="layout-card"><div className="section-title-row"><div><span className="eyebrow">MASTER DATA</span><h3>Status Validasi & State</h3></div><input className="module-search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari pallet / SKU / barang / barcode..." /></div>{loading ? <div className="loading-box">Memuat...</div> : <div className="master-table-wrap"><table className="detail-table"><thead><tr><th>Pallet</th><th>State</th><th>Validasi</th><th>Item</th><th>Berat</th><th>Lokasi</th><th>Aksi</th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><strong>{p.id}</strong><br/><span className="muted">{p.name}</span></td><td>{p.state}</td><td><select value={p.validationStatus || 'pending'} onChange={e => setValidation(p, e.target.value)}><option value="pending">Pending</option><option value="valid">Valid</option><option value="invalid">Invalid</option></select></td><td>{p.summary?.itemCount || p.items?.length || 0}</td><td>{fmt(p.summary?.totalWeight)} kg</td><td>{p.location?.slotCode || 'Unplaced'}</td><td><Link className="secondary small-button" to={`/layout/${p.id}`}>Kelola Item</Link></td></tr>)}</tbody></table></div>}</div>
+      <div className="layout-card"><div className="section-title-row"><div><span className="eyebrow">MASTER DATA</span><h3>Status Validasi & State</h3></div><input className="module-search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari pallet / SKU / barang / barcode..." /></div>{loading ? <div className="loading-box">Memuat...</div> : <div className="master-table-wrap"><table className="detail-table"><thead><tr><th>Pallet</th><th>State</th><th>Validasi</th><th>Item</th><th>Berat</th><th>Lokasi</th><th>Aksi</th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><strong>{p.id}</strong><br/><span className="muted">{p.name}</span></td><td>{p.state}</td><td><select value={p.validationStatus || 'pending'} disabled={Boolean(validationSaving[p.id])} onChange={e => setValidation(p, e.target.value)}><option value="pending">Pending</option><option value="valid">Valid</option><option value="invalid">Invalid</option></select></td><td>{p.summary?.itemCount || p.items?.length || 0}</td><td>{fmt(p.summary?.totalWeight)} kg</td><td>{p.location?.slotCode || 'Unplaced'}</td><td><Link className="secondary small-button" to={`/layout/${p.id}`}>Kelola Item</Link></td></tr>)}</tbody></table></div>}</div>
     </>}
 
     {tab === 'items' && <div className="layout-card"><div className="section-title-row"><div><span className="eyebrow">DYNAMIC ITEM MANAGER</span><h3>Pilih Palet untuk Kelola Barang</h3></div></div><div className="master-table-wrap"><table className="detail-table"><thead><tr><th>Pallet</th><th>Jumlah SKU</th><th>Jenis Barang</th><th>Berat</th><th>Aksi</th></tr></thead><tbody>{filtered.map(p => <tr key={p.id}><td><strong>{p.id}</strong><br/><span className="muted">{p.name}</span></td><td>{fmt(p.summary?.totalSku)}</td><td>{[...new Set((p.items || []).map(i => i.itemType).filter(Boolean))].join(', ') || '-'}</td><td>{fmt(p.summary?.totalWeight)} kg</td><td><Link className="primary small-button" to={`/layout/${p.id}`}>Buka Manajer Item</Link></td></tr>)}</tbody></table></div></div>}

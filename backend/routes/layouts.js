@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import Layout from '../models/Layout.js'
-import { Pallet, PositionHistory } from './pallets.js'
+import { Pallet, PositionHistory } from '../models/Pallet.js'
 
 const router = Router()
 

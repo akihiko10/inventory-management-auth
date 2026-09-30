@@ -6,7 +6,8 @@ import {
   addPalletItem,
   deletePalletItem,
   getPallet,
-  updatePalletItem
+  updatePalletItem,
+  getApiErrorMessage
 } from '../services/api'
 
 const initialForm = {
@@ -84,27 +85,52 @@ export default function PalletDetail() {
     setSaving(true)
 
     try {
-      const payload = {
-        ...form,
-        packageQty: Number(form.packageQty),
-        cartonQty: Number(form.cartonQty),
-        sackQty: Number(form.sackQty),
-        boxQty: Number(form.boxQty),
-        weightKg: Number(form.weightKg),
-        customFields: (() => { try { return JSON.parse(form.customFieldsText || '{}') } catch { return {} } })()
+      const customFields = JSON.parse(form.customFieldsText || '{}')
+      if (!customFields || typeof customFields !== 'object' || Array.isArray(customFields)) {
+        throw new Error('Dynamic Fields harus berupa object JSON, misalnya {\"batch\":\"B-001\"}')
       }
 
+      const payload = {
+        sku: String(form.sku || '').trim(),
+        itemName: String(form.itemName || '').trim(),
+        itemType: String(form.itemType || '').trim(),
+        packaging: String(form.packaging || '').trim(),
+        barcode: String(form.barcode || '').trim(),
+        packageQty: Number(form.packageQty || 0),
+        cartonQty: Number(form.cartonQty || 0),
+        sackQty: Number(form.sackQty || 0),
+        boxQty: Number(form.boxQty || 0),
+        weightKg: Number(form.weightKg || 0),
+        customFields
+      }
+
+      if (!payload.sku) throw new Error('SKU wajib diisi')
+      if (!payload.itemName) throw new Error('Nama barang wajib diisi')
+      for (const [key, value] of Object.entries(payload)) {
+        if (['packageQty', 'cartonQty', 'sackQty', 'boxQty', 'weightKg'].includes(key) && !Number.isFinite(value)) {
+          throw new Error(`Nilai ${key} tidak valid`)
+        }
+      }
+
+      let response
       if (editingItem) {
-        await updatePalletItem(palletId, editingItem.id, payload)
+        response = await updatePalletItem(palletId, editingItem.id, payload)
       } else {
-        await addPalletItem(palletId, payload)
+        response = await addPalletItem(palletId, payload)
+      }
+
+      // Backend mengembalikan pallet terbaru. Gunakan langsung agar UI tidak
+      // menunggu state lama / response GET yang tertinggal.
+      if (response?.data?.pallet) {
+        setPallet(response.data.pallet)
+      } else {
+        await loadPallet()
       }
 
       setShowModal(false)
-      await loadPallet()
     } catch (err) {
-      console.error(err)
-      alert(err?.response?.data?.message || 'Gagal menyimpan item')
+      console.error('Pallet item save error:', err?.response?.data || err)
+      alert(getApiErrorMessage(err, 'Gagal menyimpan item ke pallet'))
     } finally {
       setSaving(false)
     }
@@ -118,7 +144,7 @@ export default function PalletDetail() {
       await loadPallet()
     } catch (err) {
       console.error(err)
-      alert(err?.response?.data?.message || 'Gagal menghapus item')
+      alert(getApiErrorMessage(err, 'Gagal menghapus item'))
     }
   }
 

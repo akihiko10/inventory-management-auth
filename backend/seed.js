@@ -83,6 +83,44 @@ export async function seedInitialData() {
     console.log('Seed: 8 pallet + detail barang awal dibuat (P01-P08)')
   }
 
+  // Migrasi data lama: detail barang yang sebelumnya disimpan di koleksi
+  // PalletDetail dipindahkan ke items embedded pada Pallet.
+  const existingPallets = await Pallet.find()
+  for (const pallet of existingPallets) {
+    if (!Array.isArray(pallet.items)) pallet.items = []
+    if (!pallet.validationStatus) pallet.validationStatus = 'pending'
+    if (!pallet.locationStatus) pallet.locationStatus = 'unplaced'
+    if (!pallet.color) pallet.color = '#4f7cff'
+
+    const legacyItems = await PalletDetail.find({ pallet: pallet._id })
+    if (pallet.items.length === 0 && legacyItems.length > 0) {
+      pallet.items = legacyItems.map(item => ({
+        id: item.id,
+        sku: item.sku,
+        itemName: item.itemName,
+        itemType: item.itemType || '',
+        packaging: item.packaging || '-',
+        packageQty: Number(item.packageQty || 0),
+        cartonQty: Number(item.cartonQty || 0),
+        sackQty: Number(item.sackQty || 0),
+        boxQty: Number(item.boxQty || 0),
+        weightKg: Number(item.weightKg || 0),
+        barcode: item.barcode || '',
+        receivedAt: item.createdAt || new Date(),
+        customFields: {}
+      }))
+      console.log(`Migration: ${legacyItems.length} item dari ${pallet.id} dipindahkan ke embedded items`)
+    }
+
+    const hasPositive = pallet.items.some(item =>
+      Number(item.packageQty || 0) + Number(item.cartonQty || 0) +
+      Number(item.sackQty || 0) + Number(item.boxQty || 0) + Number(item.weightKg || 0) > 0
+    )
+    pallet.state = pallet.items.length && hasPositive ? 'occupied' : 'empty'
+    pallet.status = pallet.state === 'empty' ? 'empty' : 'occupied'
+    await pallet.save()
+  }
+
   const layoutCount = await Layout.countDocuments()
 
   if (layoutCount === 0) {

@@ -1,27 +1,87 @@
-# Warehouse Management Mobile
+# Warehouse Mobile - Flutter
 
-Mobile client untuk sistem Inventory Management. Fitur dan API dibuat 1:1 dengan web: dashboard, pallet, pallet layout, denah gudang, inbound, outbound, transaksi, dan manifest.
+Mobile application for the Warehouse Management project.
 
-## Menjalankan
+## Stack
+- Flutter + Dart
+- REST API / JSON
+- Existing Express.js backend
+- Existing MongoDB database
 
-1. Pastikan backend web berjalan di komputer pada port 3000.
-2. Masuk ke folder `mobile`.
-3. `npm install`
-4. Salin `.env.example` menjadi `.env` dan sesuaikan `EXPO_PUBLIC_API_URL`.
-5. `npm start`
-6. Scan QR dengan Expo Go atau jalankan emulator Android.
+## Scope
+Mobile is focused on warehouse operations:
+- Dashboard ringkas
+- Pallet: search, detail, barcode, physical summary, position history
+- Warehouse: slot monitoring and pallet movement
+- Inbound / Outbound: draft and transaction monitoring
+- Dispatch: driver & plate information through transaction workflow
+- Manifest: list, generate and reconcile
 
-### Catatan koneksi
-- Android Emulator: `10.0.2.2` menunjuk ke komputer host.
-- iOS Simulator: `localhost`.
-- HP fisik: komputer dan HP harus berada di Wi-Fi/LAN yang sama, lalu gunakan IP komputer, misalnya `http://192.168.1.10:3000/api`.
-- Windows Firewall harus mengizinkan Node.js/port 3000 bila HP fisik tidak bisa terhubung.
+## API URL
+Do not hardcode the PC IP in source code. Run with:
 
-## Prinsip UI
+```bash
+flutter run --dart-define=API_URL=http://10.52.185.85:3000/api
+```
 
-Mobile mempertahankan semua fungsi web, tetapi interaksi disesuaikan dengan layar sentuh. Drag & drop desktop untuk movement pallet di mobile menggunakan pola `Pilih pallet -> pilih tujuan -> konfirmasi`, sehingga fungsi tetap sama tanpa membuat target slot terlalu kecil.
+For production:
 
+```bash
+flutter run --dart-define=API_URL=https://your-api-domain.com/api
+```
 
-## Expo SDK 54 compatibility
+## First setup
 
-Dependencies are pinned to Expo SDK 54 compatible versions. Do not use caret (`^`) ranges for Expo/RN native packages in this project.
+1. Install Flutter and Android Studio.
+2. Create the platform folders in this source directory:
+
+```bash
+flutter create .
+```
+
+3. Get packages:
+
+```bash
+flutter pub get
+```
+
+4. Run on a connected Android phone:
+
+```bash
+flutter run --dart-define=API_URL=http://YOUR_PC_IP:3000/api
+```
+
+5. Build release APK:
+
+```bash
+flutter build apk --release --dart-define=API_URL=https://your-api-domain.com/api
+```
+
+APK will be at:
+`build/app/outputs/flutter-apk/app-release.apk`
+
+## Android permissions
+`mobile_scanner` requires camera permission. `android/app/src/main/AndroidManifest.xml` should contain:
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+```
+
+The package normally adds its own requirements through the plugin, but verify this after `flutter create .`.
+
+## Backend requirements for a physical phone
+The Express backend must be reachable from the phone. Do not use `localhost` in the phone app.
+
+For local testing:
+- PC and phone on the same Wi-Fi.
+- Use the PC Wi-Fi IPv4 address, e.g. `10.52.185.85`.
+- Allow TCP port 3000 through Windows Firewall if necessary.
+- Ensure Express listens on `0.0.0.0`, not only `127.0.0.1`.
+
+Test from the PC:
+`http://localhost:3000/api`
+
+Then test from the phone browser:
+`http://YOUR_PC_IP:3000/api`
+
+If the phone cannot reach the backend, Flutter will show a network error.

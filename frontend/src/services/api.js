@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -135,3 +135,7 @@ export const generateManifest = data => api.post('/manifests/generate', data)
 export const reconcileManifest = (id, data) => api.put(`/manifests/${id}/reconcile`, data)
 
 export const exportManifestCsv = () => api.get('/manifests/export/csv', { responseType: 'blob' })
+
+export function getApiErrorMessage(error, fallback = 'Terjadi kesalahan pada server') {
+  return error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback
+}
